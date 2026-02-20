@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: library-sql
+data:
+  library.sql: |
+    CREATE DATABASE IF NOT EXISTS library;
+    USE library;
+
+    CREATE TABLE authors (
+      author_id INT PRIMARY KEY AUTO_INCREMENT,
+      full_name VARCHAR(40)
+    );
+
+    CREATE TABLE books (
+      book_id INT PRIMARY KEY AUTO_INCREMENT,
+      title VARCHAR(100),
+      author_id INT,
+      FOREIGN KEY (author_id) REFERENCES authors(author_id)
+    );
+
+    INSERT INTO authors (full_name) VALUES
+    ('Phil'),
+    ('William Shakespeare'),
+    ('Jane Austen'),
+    ('Charles Dickens');

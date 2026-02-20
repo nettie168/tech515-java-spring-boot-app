@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sparta-deployment
+  labels:
+    tag: sparta-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      tag: sparta-app
+  template:
+    metadata:
+      labels:
+        tag: sparta-app
+    spec:
+      containers:
+      - name: sparta-container
+        image: nettieab/sparta-library-app
+        ports:
+          - containerPort: 5000
+        env:
+        - name: DB_HOST
+          value: jdbc:mysql://mysqldb:3306/library
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+                key: MYSQL_USER
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_PASSWORD
+        command: ["java"]
+        args: ["-jar","app.jar"]
