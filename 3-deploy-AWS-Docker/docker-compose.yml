@@ -1,0 +1,32 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: library
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./library.sql:/docker-entrypoint-initdb.d/library.sql
+    ports:
+      - "3306:3306"
+
+  app:
+    build: .
+    container_name: spring-app
+    restart: always
+    depends_on:
+      - mysql
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: jdbc:mysql://mysql:3306/library
+      DB_PORT: 3306
+      DB_USER: appuser
+      DB_PASS: apppassword
+
+volumes:
+  mysql_data:
