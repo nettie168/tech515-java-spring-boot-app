@@ -1,5 +1,5 @@
 # How to create private GitHub repo
-## For the storage of the app code and SQL script to seed the database
+## For the storage of the app code (along with the SQL script which seeds the database)
 
 1. Download zip file from Teams
 2. Extract zip file into empty directory `tech515-sparta-java-app-code`
