@@ -1,40 +1,66 @@
-# Deployment of the Java Sprint Boot App
+# 2-tier Deployment of the Java Spring  Boot App on AWS
 
-Steps for deployment of the Sparta Java Spring Boot App on an AWS EC2 VM.
+Steps for deployment of the Sparta Java Spring Boot App on two AWS EC2 VMs.
 
-### General Method for Java Spring Boot app Deployment with SQL DB
-To Run the app 7 stages are needed:
+- [2-tier Deployment of the Java Spring  Boot App on AWS](#2-tier-deployment-of-the-java-spring--boot-app-on-aws)
+  - [General Method for Java Spring Boot app Deployment with SQL DB](#general-method-for-java-spring-boot-app-deployment-with-sql-db)
+      - [For DB](#for-db)
+      - [For app](#for-app)
+  - [Steps for deployment](#steps-for-deployment)
+      - [DB Deployment Steps](#db-deployment-steps)
+      - [App Deployment Steps](#app-deployment-steps)
+    - [App EC2 Requirements for testing](#app-ec2-requirements-for-testing)
+  - [DB Deployment](#db-deployment)
+    - [1. Update and upgrade OS](#1-update-and-upgrade-os)
+    - [2. Install MySQL](#2-install-mysql)
+    - [3. Configure bind IP and restart](#3-configure-bind-ip-and-restart)
+    - [4. Set user and create DB](#4-set-user-and-create-db)
+  - [App Deployment](#app-deployment)
+      - [1. Update and upgrade OS](#1-update-and-upgrade-os-1)
+      - [2. Install Java](#2-install-java)
+      - [2b. Set the PATH](#2b-set-the-path)
+    - [3. Install Maven](#3-install-maven)
+    - [4. Clone repo with Personal Access Token](#4-clone-repo-with-personal-access-token)
+      - [4a. Create a Personal Access Token](#4a-create-a-personal-access-token)
+      - [4b. Clone with Personal Access Token](#4b-clone-with-personal-access-token)
+    - [5. Connect app to DB](#5-connect-app-to-db)
+    - [6. Run app](#6-run-app)
+- [Automated Deployment with Bash Script](#automated-deployment-with-bash-script)
+- [Automated Deployment with AMI](#automated-deployment-with-ami)
+
+## General Method for Java Spring Boot app Deployment with SQL DB
+
+Steps for deploying on an Ubuntu 22.04 EC2 Instance:
+
+#### For DB
+
+1. MySQL installed
+2. MySQL Path set and running
+3. Database created
+
+#### For app
 
 1. Java installed
 2. Maven installed (with version compatible with java version)
-3. MySQL installed
-4. MySQL Path set and running
-5. Database created
-6. App connected to db 
+3. App code downloaded
+4. App connected to db 
    - app to know location of database (and have access)
-7. App started
+5. App started
 
+## Steps for deployment
 
-
-# Manual Deployment of Java app
-
-For doing this manually and on an Ubuntu 22.04 EC2 Instance:
-
-
-**On db EC2**
+#### DB Deployment Steps
 
 1. Update OS libraries
 2. Install MySQL
    - with `sudo apt install mysql-server`
-2. MySQL Path set and enable (is this needed?)
-    - by adding the PATH to the system environment variables
-    - `sudo systemctl start mysqld` and `sudo systemctl enable mysqld` ??
-    - check can access `sudo mysql`
-3. Database seeded
+3. Configure bind IP and restart
+4. Add user(s)
+5. Database seeded
    - Create `library.sql`
    - with `library.sql` file using `sudo mysql -u root < library.sql`
-  
-**On app EC2**
+
+#### App Deployment Steps
 
 1. Update OS libraries
 2. Install nginx and configure reverse proxy
@@ -50,8 +76,6 @@ For doing this manually and on an Ubuntu 22.04 EC2 Instance:
    - set the environment variables in the `.env`
 7. Start app
    - `mvn spring-boot:run`
-
-
 
 ### App EC2 Requirements for testing
 
@@ -78,136 +102,19 @@ For production put both VMs in custom VPC
 ssh into EC2 instance
 
 
-## Manual DB deployment
+## DB Deployment
+
+See [prov-sql-db.sh](./prov-sql-db.sh)
 
 ### 1. Update and upgrade OS
 
+`sudo apt update && sudo apt upgrade`
+
 ### 2. Install MySQL
 
-After install get:
-![alt text](image-4.png)
+`sudo DEBIAN_FRONTEND=noninteractive apt install mysql-server -y`
 
-start and enable
-
-
-
-'When you install MySQL on Ubuntu, the default username is root, but it often has no password initially or uses the auth_socket plugin, meaning you log in with sudo mysql without typing a password. The password is set during the mysql_secure_installation script, where you create a strong password for the root user and remove anonymous users for security, so there isn't a fixed, pre-set password you need to know. 
-
-Default Login (After Initial Install):
-- Username: root
-- Password: Often blank (press Enter), or relies on your system user via auth_socket. 
-  
-#### How to Connect & Secure MySQL:
-
-When you first connect to mysql you don't require a password
-- bash `sudo mysql` This uses your Ubuntu user's privileges to log into MySQL as the root user. `exit;` to exit
-- shows you can log into mysql without a password (security risk)
-  
-  #### Add user
-  Run Security Script:
-- bash `sudo mysql_secure_installation` (sudo uses your Ubuntu user's privileges to log into MySQL as the root user )
-  This script will prompt you to:
-  1. Ask if you want to enable secure passwords (Check & inform user on how secure their password is and only allow secure passwords to be set) - choose yes 
-  2. What level of secure of secure passwords are allowed; low, medium or high?
-  3. Inform you that root user is not password protected, as it uses auth_socket by default, and that you can change this ALTER _USER
-  4. anonymous users
-```
-By default, a MySQL installation has an anonymous user,
-allowing anyone to log into MySQL without having to have
-a user account created for them. This is intended only for
-testing, and to make the installation go a bit smoother.
-You should remove them before moving into a production
-environment.
-```
-5. Only allow root from localhost
-
-```
-Normally, root should only be allowed to connect from
-'localhost'. This ensures that someone cannot guess at
-the root password from the network.
-```
-6. Remove test db
-7. Reload privilige tables
-
-
-```
-sudo mysql_secure_installation
-
-Securing the MySQL server deployment.
-
-Connecting to MySQL using a blank password.
-
-VALIDATE PASSWORD COMPONENT can be used to test passwords
-and improve security. It checks the strength of password
-and allows the users to set only those passwords which are
-secure enough. Would you like to setup VALIDATE PASSWORD component?
-
-Press y|Y for Yes, any other key for No: y
-
-There are three levels of password validation policy:
-
-LOW    Length >= 8
-MEDIUM Length >= 8, numeric, mixed case, and special characters
-STRONG Length >= 8, numeric, mixed case, special characters and dictionary                  file
-
-Please enter 0 = LOW, 1 = MEDIUM and 2 = STRONG: 0
-
-Skipping password set for root as authentication with auth_socket is used by default.
-If you would like to use password authentication instead, this can be done with the "ALTER_USER" command.
-See https://dev.mysql.com/doc/refman/8.0/en/alter-user.html#alter-user-password-management for more information.
-
-By default, a MySQL installation has an anonymous user,
-allowing anyone to log into MySQL without having to have
-a user account created for them. This is intended only for
-testing, and to make the installation go a bit smoother.
-You should remove them before moving into a production
-environment.
-
-Remove anonymous users? (Press y|Y for Yes, any other key for No) : n
-
- ... skipping.
-
-
-Normally, root should only be allowed to connect from
-'localhost'. This ensures that someone cannot guess at
-the root password from the network.
-
-Disallow root login remotely? (Press y|Y for Yes, any other key for No) : y
-Success.
-
-By default, MySQL comes with a database named 'test' that
-anyone can access. This is also intended only for testing,
-and should be removed before moving into a production
-environment.
-
-
-Remove test database and access to it? (Press y|Y for Yes, any other key for No) : y
- - Dropping test database...
-Success.
-
- - Removing privileges on test database...
-Success.
-
-Reloading the privilege tables will ensure that all changes
-made so far will take effect immediately.
-
-Reload privilege tables now? (Press y|Y for Yes, any other key for No) : y
-Success.
-
-All done!
-
-
-
-- Set a strong password for the MySQL root user.
-- Remove anonymous users.
-- Disallow remote root login.
-- Remove the test database.
-Connect (With Your New Password):
-- bash `mysql -u root -p`
-You'll then enter the new password you set in the security script. 
-> **Key Takeaway:** Don't expect a default password like 'password' or 'root'; instead, run the security script to set one up for your root user. 
-```
-### Configure bind IP and restart
+### 3. Configure bind IP and restart
 
 MySQL by default is configured to only allow traffic from localhost. To check what destination it allows traffic from run `sudo ss -tulnp | grep 3306`
 
@@ -239,27 +146,40 @@ Restart MySQL so the changes take affect
 
 Now when the app goes to connect to the DB it will be allowed access.
 
-### Set user and create DB in library.sql
+This can be done automatically with:
+
+`sudo sed -i 's/bind-address            = 127.0.0.1/bind-address            = 0.0.0.0/' /etc/mysql/mysql.conf.d/mysqld.cnf`
+
+### 4. Set user and create DB
+
+```bash
+sudo mysql -e "CREATE USER 'user1'@'172.33.41.15' IDENTIFIED BY 'password123';"
+sudo mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'user1'@'172.33.41.15';"
+sudo mysql -e "FLUSH PRIVILEGES;"
+```
+
+- where `user1` is the name of your user
+- `172.33.41.15` is the IP of the public IP (or private if on network) of the app EC2.
+  - So that a user from there can access the DB. In testing you can also use `%` in place of the IP as it means from anywhere.
+- and `password123` is the secure password you want to set
+  - The password being a secure password of > 8 characters, with a mix of capital, lower case, special characters and numbers
+
+This can also be written directly into sql: 
 ```sql
 CREATE USER 'user1'@'172.33.41.15' IDENTIFIED BY 'password123';
 GRANT ALL PRIVILEGES ON library.* TO 'user1'@'172.33.41.15';
 FLUSH PRIVILEGES;
 ```
-The IP being the public IP (or private if on network), of the app EC2. So that a user from there can access the DB. In testing you can also use `%` in place of the IP as it means from anywhere.
 
-And the password being a secure password of > 8 characters, with a mix of capital, lower case, special characters and numbers
+## App Deployment 
 
-See ... script
+See [prov_java_app.sh](./prov_java_app.sh)
 
-then run with `sudo mysql < library.sql`
-
-
-## Manual App Deployment 
 #### 1. Update and upgrade OS
 
-`sudo apt update`
+`sudo apt update` -> Reach out through internet to find possible updates for OS
 
-`sudo apt upgrade`
+`sudo apt upgrade` -> Upgrade these updates
 
 #### 2. Install Java
 
@@ -306,11 +226,12 @@ Should get the result:
 ```
 
 ### 3. Install Maven
+
 Maven can be installed just like java with `apt`
 
 `sudo apt install maven`
 
-Check maven installed with version
+Check maven installed with version:
 `mvn -version`
 
 The result should be similar to:
@@ -328,15 +249,15 @@ To access a private repo you need a personal access token
 
 Go to your GitHub account then Settings > Developer settings
 
-![alt text](image-6.png)
+![alt text](./images/image-6.png)
 
-![alt text](image-7.png)
+![alt text](./images/image-7.png)
 
 Go to Personal Access Tokens
 
-![alt text](image-1.png)
+![alt text](./images/image-1.png)
 
-![alt text](image-2.png)
+![alt text](./images/image-2.png)
 
 Click `Generate New Token - (Classic)` 
 
@@ -345,7 +266,7 @@ In note, put in the name eg. `github-nettie-token-exp-feb12`
 (as in this case mine said it would expire 12th February)
 
 And click `repo`
-![alt text](image-8.png)
+![alt text](./images/image-8.png)
 
 Then click `Generate Token`
 
@@ -353,7 +274,7 @@ Copy and paste the token into a file of the same name in `~/.ssh`
 
 Then next time you go to the tokens you'll see
 
-![alt text](image-9.png)
+![alt text](./images/image-9.png)
 
 #### 4b. Clone with Personal Access Token
 
@@ -368,25 +289,25 @@ It is better to do this manually and not put in a script as this is obviously no
 You could replace it with $GIT_PAT and declare it as an environment variable, however that has the same problems if used in a script or user data. So it's best to do this step manually then use `clear` to remove the access token from your history, and then use an AMI with the app pre-downloaded.
 
 
-### Connect app to DB
+### 5. Connect app to DB
 
 Environment variables are needed as the `application.properties` file uses environment variables DB_HOST, DB_PASS and DB_USER
 
-If in testing on a default vpc then use the public IP of the DB VM, if in production or a custom vpc then use the private IP
+> NOTE: If in testing on a default vpc then use the public IP of the DB VM, if in production or a custom vpc then use the private IP
 
 `export DB_HOST=jdbc:mysql://54.76.248.61:3306/library`
 
-`export DB_USER=user1`
+where the ip is that of the DB
 
-`export DB_PASS=password123`
+`export DB_USER=user1` -> set your username
 
-
+`export DB_PASS=password123` -> set your password
 
 Check app can connect to the DB
 
 `mysql -h 54.76.248.61 -u user1 -p` -> if this fails, then the app can't connect to the DB and the app will fail when run
 
-### Run app
+### 6. Run app
 
 In `LibraryProject2` where the `pom.xml` file is run:
 `mvn spring-boot:start`
@@ -402,24 +323,32 @@ When you got to http://app-public-ip:5000 (not currently using nginx) the app sh
 
 # Automated Deployment with Bash Script
 
-Running the bash scripts
+The app and DB cannot be easily deployed straight onto a fresh VM purely with bash scripts because of sensitive information.
 
-...
+The DB VM needs to have a user created with a password, so these need to be done manually, and not hardcoded into a script
 
-`sudo apt update`
+```
+sudo mysql -e "CREATE USER 'user1'@'%' IDENTIFIED BY 'password1';"
+sudo mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'user1'@'%';"
+sudo mysql -e "FLUSH PRIVILEGES;"
+```
 
-`sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y`
+And the app VM would need to git clone manually or set an environment variable for the personal access token so that it isn't hardcoded into a script
 
+So to automate the deployment we need the right AMI
 
 # Automated Deployment with AMI
 
 1. Create an AMI from the DB VM
 2. Create an AMI from app VM
 
-The DB will have everything installed and configured so no user data is required.
+The DB VM will have MySQL installed and configured with users, so no user data is required.
 
-The app will need the environment variables set, and then the app run.
+The app VM will have java and maven installed the app code git cloned with the personal access token (so the personal access token is not hardcoded) and the environment variables set, and then the app run.
 
+It is not advisable to put the username and password into user data
+
+User data:
 ```bash
 #!/bin/bash
 

@@ -24,13 +24,10 @@ sudo systemctl restart mysql
 echo MySQL restart: DONE
 echo
 
+# The users would need to be added manually to prevent hardcoding username and password
 cat << 'EOF' > ~/library.sql
 DROP DATABASE IF EXISTS library;
 CREATE DATABASE library;
-
-CREATE USER 'user1'@'%' IDENTIFIED BY 'password123';
-GRANT ALL PRIVILEGES ON library.* TO 'user1'@'%';
-FLUSH PRIVILEGES;
 
 USE library;
 
